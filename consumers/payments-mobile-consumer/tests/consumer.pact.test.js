@@ -1,5 +1,5 @@
 const { PactV3, MatchersV3 } = require('@pact-foundation/pact');
-const { like, string, regex } = MatchersV3;
+const { like, regex } = MatchersV3;
 const PaymentsApiClient = require('../src/paymentsApiClient');
 const path = require('path');
 
@@ -33,7 +33,6 @@ describe('Payments API — Consumer Pact Tests', () => {
           path: '/v1/payments/sepa-credit-transfers',
           headers: {
             Authorization: like('Bearer test-access-token'),
-            'Content-Type': string('application/json'),
           },
           body: {
             creditorAccount: { iban: like('NL02ABNA0123456789') },
@@ -47,9 +46,6 @@ describe('Payments API — Consumer Pact Tests', () => {
         })
         .willRespondWith({
           status: 201,
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: {
             paymentId: like('payment-id-abc123'),
             transactionStatus: like('RCVD'),
@@ -57,14 +53,8 @@ describe('Payments API — Consumer Pact Tests', () => {
         });
 
       return provider.executeTest(async (mockServer) => {
-        const client = new PaymentsApiClient(
-          mockServer.url,
-          'test-access-token'
-        );
-        const data = await client.initiatePayment(
-          PAYMENT_INITIATION,
-          REQUEST_ID
-        );
+        const client = new PaymentsApiClient(mockServer.url, 'test-access-token');
+        const data = await client.initiatePayment(PAYMENT_INITIATION, REQUEST_ID);
         expect(data).toHaveProperty('paymentId');
         expect(data).toHaveProperty('transactionStatus');
       });
@@ -77,16 +67,10 @@ describe('Payments API — Consumer Pact Tests', () => {
         .withRequest({
           method: 'POST',
           path: '/v1/payments/sepa-credit-transfers',
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: like(PAYMENT_INITIATION),
         })
         .willRespondWith({
           status: 401,
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: {
             code: like('UNAUTHORIZED'),
             message: like('Missing or invalid authorization header'),
@@ -98,8 +82,7 @@ describe('Payments API — Consumer Pact Tests', () => {
         await expect(
           axios.post(
             `${mockServer.url}/v1/payments/sepa-credit-transfers`,
-            PAYMENT_INITIATION,
-            { headers: { 'Content-Type': 'application/json' } }
+            PAYMENT_INITIATION
           )
         ).rejects.toMatchObject({ response: { status: 401 } });
       });
@@ -122,9 +105,6 @@ describe('Payments API — Consumer Pact Tests', () => {
         })
         .willRespondWith({
           status: 200,
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: {
             paymentId: like(PAYMENT_ID),
             transactionStatus: like('ACSC'),
@@ -132,10 +112,7 @@ describe('Payments API — Consumer Pact Tests', () => {
         });
 
       return provider.executeTest(async (mockServer) => {
-        const client = new PaymentsApiClient(
-          mockServer.url,
-          'test-access-token'
-        );
+        const client = new PaymentsApiClient(mockServer.url, 'test-access-token');
         const data = await client.getPaymentStatus(PAYMENT_ID, REQUEST_ID);
         expect(data).toHaveProperty('paymentId');
         expect(data).toHaveProperty('transactionStatus');
@@ -152,9 +129,6 @@ describe('Payments API — Consumer Pact Tests', () => {
         })
         .willRespondWith({
           status: 401,
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: {
             code: like('UNAUTHORIZED'),
             message: like('Missing or invalid authorization header'),

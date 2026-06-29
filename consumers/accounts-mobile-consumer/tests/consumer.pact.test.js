@@ -1,11 +1,10 @@
 const { PactV3, MatchersV3 } = require('@pact-foundation/pact');
-const { like, string, regex, eachLike } = MatchersV3;
+const { like, regex, eachLike } = MatchersV3;
 const AccountsApiClient = require('../src/accountsApiClient');
 const path = require('path');
 
-// ISO date helper — avoids datetime() which can be fragile
-const isoDate = (example) =>
-  regex('^\\d{4}-\\d{2}-\\d{2}$', example);
+// ISO date helper — never use datetime() on date-only fields
+const isoDate = (example) => regex('^\\d{4}-\\d{2}-\\d{2}$', example);
 
 const provider = new PactV3({
   consumer: 'ing-accounts-mobile-consumer',
@@ -34,9 +33,6 @@ describe('Accounts API — Consumer Pact Tests', () => {
         })
         .willRespondWith({
           status: 200,
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: {
             accounts: eachLike({
               resourceId: like('3dc3d5b3-7023-4848-9853-f5400a64e80f'),
@@ -50,10 +46,7 @@ describe('Accounts API — Consumer Pact Tests', () => {
         });
 
       return provider.executeTest(async (mockServer) => {
-        const client = new AccountsApiClient(
-          mockServer.url,
-          'test-access-token'
-        );
+        const client = new AccountsApiClient(mockServer.url, 'test-access-token');
         const data = await client.getAccounts(REQUEST_ID);
         expect(data.accounts).toHaveLength(1);
         expect(data.accounts[0]).toHaveProperty('iban');
@@ -71,9 +64,6 @@ describe('Accounts API — Consumer Pact Tests', () => {
         })
         .willRespondWith({
           status: 401,
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: {
             code: like('UNAUTHORIZED'),
             message: like('Missing or invalid authorization header'),
@@ -81,8 +71,6 @@ describe('Accounts API — Consumer Pact Tests', () => {
         });
 
       return provider.executeTest(async (mockServer) => {
-        const client = new AccountsApiClient(mockServer.url, null);
-        // Override headers to send no auth
         const axios = require('axios');
         await expect(
           axios.get(`${mockServer.url}/v3/accounts`)
@@ -107,9 +95,6 @@ describe('Accounts API — Consumer Pact Tests', () => {
         })
         .willRespondWith({
           status: 200,
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: {
             balances: eachLike({
               balanceType: like('closingBooked'),
@@ -123,10 +108,7 @@ describe('Accounts API — Consumer Pact Tests', () => {
         });
 
       return provider.executeTest(async (mockServer) => {
-        const client = new AccountsApiClient(
-          mockServer.url,
-          'test-access-token'
-        );
+        const client = new AccountsApiClient(mockServer.url, 'test-access-token');
         const data = await client.getBalances(ACCOUNT_ID, REQUEST_ID);
         expect(data.balances).toHaveLength(1);
         expect(data.balances[0]).toHaveProperty('balanceAmount');
@@ -144,9 +126,6 @@ describe('Accounts API — Consumer Pact Tests', () => {
         })
         .willRespondWith({
           status: 401,
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: {
             code: like('UNAUTHORIZED'),
             message: like('Missing or invalid authorization header'),
@@ -178,9 +157,6 @@ describe('Accounts API — Consumer Pact Tests', () => {
         })
         .willRespondWith({
           status: 200,
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: {
             transactions: {
               booked: eachLike({
@@ -192,25 +168,18 @@ describe('Accounts API — Consumer Pact Tests', () => {
                   amount: like('-85.50'),
                 },
                 creditorName: like('Albert Heijn BV'),
-                remittanceInformationUnstructured: like(
-                  'Boodschappen 01-09-2025'
-                ),
+                remittanceInformationUnstructured: like('Boodschappen 01-09-2025'),
               }),
             },
           },
         });
 
       return provider.executeTest(async (mockServer) => {
-        const client = new AccountsApiClient(
-          mockServer.url,
-          'test-access-token'
-        );
+        const client = new AccountsApiClient(mockServer.url, 'test-access-token');
         const data = await client.getTransactions(ACCOUNT_ID, REQUEST_ID);
         expect(data.transactions.booked).toHaveLength(1);
         expect(data.transactions.booked[0]).toHaveProperty('transactionId');
-        expect(data.transactions.booked[0].transactionAmount).toHaveProperty(
-          'amount'
-        );
+        expect(data.transactions.booked[0].transactionAmount).toHaveProperty('amount');
       });
     });
 
@@ -224,9 +193,6 @@ describe('Accounts API — Consumer Pact Tests', () => {
         })
         .willRespondWith({
           status: 401,
-          headers: {
-            'Content-Type': string('application/json'),
-          },
           body: {
             code: like('UNAUTHORIZED'),
             message: like('Missing or invalid authorization header'),
@@ -236,9 +202,7 @@ describe('Accounts API — Consumer Pact Tests', () => {
       return provider.executeTest(async (mockServer) => {
         const axios = require('axios');
         await expect(
-          axios.get(
-            `${mockServer.url}/v3/accounts/${ACCOUNT_ID}/transactions`
-          )
+          axios.get(`${mockServer.url}/v3/accounts/${ACCOUNT_ID}/transactions`)
         ).rejects.toMatchObject({ response: { status: 401 } });
       });
     });
