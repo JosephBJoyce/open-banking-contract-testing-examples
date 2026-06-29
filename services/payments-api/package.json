@@ -1,0 +1,19 @@
+{
+  "name": "ing-payments-api",
+  "version": "1.0.0",
+  "description": "ING payments API — BDCT provider self-verification",
+  "scripts": {
+    "start": "node src/server.js",
+    "test:bdct": "jest tests/provider.bdct.test.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "^13.0.0",
+    "jest": "^29.0.0"
+  },
+  "jest": {
+    "testTimeout": 60000
+  }
+}

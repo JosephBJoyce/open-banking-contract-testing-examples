@@ -1,0 +1,33 @@
+name: Setup PactFlow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    env:
+      PACT_BROKER_BASE_URL: https://smart-bank.pactflow.io
+      PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+    steps:
+      - name: Create environments
+        run: |
+          for env in production staging; do
+            response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+              "$PACT_BROKER_BASE_URL/environments" \
+              -H "Authorization: Bearer $PACT_BROKER_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"name\":\"$env\",\"displayName\":\"${env^}\",\"production\":$([ \"$env\" = \"production\" ] && echo true || echo false)}")
+            echo "Create $env: $response"
+          done
+
+      - name: Register pacticipants
+        run: |
+          for name in "ing-accounts-mobile-consumer" "ing-accounts-api" "ing-payments-mobile-consumer" "ing-payments-api"; do
+            response=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
+              "$PACT_BROKER_BASE_URL/pacticipants/$name" \
+              -H "Authorization: Bearer $PACT_BROKER_TOKEN" \
+              -H "Content-Type: application/merge-patch+json" \
+              -d "{\"name\":\"$name\"}")
+            echo "Register $name: $response"
+          done

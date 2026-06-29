@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: ING Payments API
+  description: ING PSD2 Payments API — SEPA Credit Transfers
+  version: 1.0.0
+  contact:
+    name: ING Developer Portal
+    url: https://developer.ing.com
+
+servers:
+  - url: https://api.ing.com
+    description: Production
+  - url: https://api.sandbox.ing.com
+    description: Sandbox
+
+security:
+  - BearerAuth: []
+
+paths:
+  /v1/payments/sepa-credit-transfers:
+    post:
+      summary: Initiate a SEPA credit transfer
+      operationId: initiateSepaPayment
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentInitiation'
+      responses:
+        '201':
+          description: Payment accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentInitiationResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/payments/sepa-credit-transfers/{paymentId}/status:
+    get:
+      summary: Get payment status
+      operationId: getPaymentStatus
+      tags:
+        - Payments
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentStatusResponse'
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Payment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Amount:
+      type: object
+      required:
+        - currency
+        - amount
+      properties:
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: EUR
+        amount:
+          type: string
+          pattern: '^-?\d+\.\d{2}$'
+          example: '150.00'
+
+    AccountReference:
+      type: object
+      required:
+        - iban
+      properties:
+        iban:
+          type: string
+          example: NL02ABNA0123456789
+
+    PaymentInitiation:
+      type: object
+      required:
+        - creditorAccount
+        - creditorName
+        - instructedAmount
+      properties:
+        creditorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        creditorName:
+          type: string
+          example: Merchant BV
+        instructedAmount:
+          $ref: '#/components/schemas/Amount'
+        remittanceInformationUnstructured:
+          type: string
+          example: Invoice 2025-001
+
+    PaymentInitiationResponse:
+      type: object
+      required:
+        - paymentId
+        - transactionStatus
+      properties:
+        paymentId:
+          type: string
+          example: payment-id-abc123
+        transactionStatus:
+          type: string
+          enum:
+            - RCVD
+            - PDNG
+            - ACSC
+            - RJCT
+          example: RCVD
+
+    PaymentStatusResponse:
+      type: object
+      required:
+        - paymentId
+        - transactionStatus
+      properties:
+        paymentId:
+          type: string
+          example: payment-id-abc123
+        transactionStatus:
+          type: string
+          enum:
+            - RCVD
+            - PDNG
+            - ACSC
+            - RJCT
+          example: ACSC
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: UNAUTHORIZED
+        message:
+          type: string
+          example: Missing or invalid authorization header

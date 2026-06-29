@@ -1,0 +1,7 @@
+node_modules/
+pacts/
+logs/
+*.log
+.env
+coverage/
+verification-results.json
