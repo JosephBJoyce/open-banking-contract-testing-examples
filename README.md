@@ -1,4 +1,4 @@
-# ING Open Banking — Contract Testing Demo
+# Open Banking — Contract Testing Demo
 
 This repository demonstrates two contract testing patterns against ING's PSD2 APIs.
 
