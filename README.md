@@ -1,17 +1,17 @@
 # Open Banking — Contract Testing Demo
 
-This repository demonstrates two contract testing patterns against ING's PSD2 APIs.
+This repository demonstrates two contract testing patterns against PSD2 APIs.
 
 ## Patterns
 
 ### Classic CDC (Consumer-Driven Contract Testing) — Accounts API
-- Consumer: `ing-accounts-mobile-consumer`
-- Provider: `ing-accounts-api`
+- Consumer: `accounts-mobile-consumer`
+- Provider: `accounts-api`
 - The consumer writes Pact tests defining expectations; the provider verifies them.
 
 ### BDCT (Bi-Directional Contract Testing) — Payments API
-- Consumer: `ing-payments-mobile-consumer`
-- Provider: `ing-payments-api`
+- Consumer: `payments-mobile-consumer`
+- Provider: `payments-api`
 - The provider publishes its OpenAPI spec to PactFlow; PactFlow cross-verifies against consumer pacts.
 
 ## PactFlow Workspace
